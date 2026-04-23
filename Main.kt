@@ -1,71 +1,150 @@
-class Pembeli(
-    val nama: String,
-    private var uangTunai: Int
+class Pelanggan(
+    private val nama: String,
+    saldoAwal: Int
 ) {
-    private var poinMember: Int = 0
+    private var saldo: Int = saldoAwal
 
-    fun lihatUang(): Int = uangTunai
-    fun lihatPoin(): Int = poinMember
-
-    fun kurangiUang(jumlah: Int): Boolean {
-        return if (jumlah > 0 && uangTunai >= jumlah) {
-            uangTunai -= jumlah
-            true
-        } else false
+    fun getNama(): String {
+        return nama
     }
 
-    fun tambahPoin(poin: Int) {
-        if (poin > 0) poinMember += poin
+    fun getSaldo(): Int {
+        return saldo
+    }
+
+    fun topUpSaldo(jumlah: Int) {
+        if (jumlah > 0) {
+            saldo += jumlah
+            println("Top up berhasil. Saldo ${nama} sekarang: Rp$saldo")
+        } else {
+            println("Top up gagal. Jumlah top up harus lebih dari 0.")
+        }
+    }
+
+    fun kurangiSaldo(jumlah: Int): Boolean {
+        return if (jumlah > 0 && saldo >= jumlah) {
+            saldo -= jumlah
+            true
+        } else {
+            false
+        }
     }
 }
 
-class Barang(
-    val namaBarang: String,
-    val harga: Int,
-    private var stok: Int
+class Dokumen(
+    private val namaDokumen: String,
+    private val jumlahHalaman: Int
 ) {
-    fun lihatStok(): Int = stok
+    fun getNamaDokumen(): String {
+        return namaDokumen
+    }
 
-    fun kurangiStok(jumlah: Int): Boolean {
-        return if (jumlah > 0 && stok >= jumlah) {
-            stok -= jumlah
-            true
-        } else false
+    fun getJumlahHalaman(): Int {
+        return jumlahHalaman
     }
 }
 
-class Kasir(val namaKasir: String) {
-    fun prosesTransaksi(pembeli: Pembeli, barang: Barang, jumlah: Int) {
-        println("Kasir $namaKasir memproses transaksi...")
+class MesinPrint(
+    private val namaMesin: String,
+    tintaAwal: Int,
+    kertasAwal: Int,
+    private val hargaPerLembar: Int
+) {
+    private var tinta: Int = tintaAwal
+    private var kertas: Int = kertasAwal
 
-        val total = barang.harga * jumlah
+    fun getInfoMesin(): String {
+        return "Mesin: $namaMesin | Tinta: $tinta | Kertas: $kertas | Harga/Lembar: Rp$hargaPerLembar"
+    }
 
-        if (barang.lihatStok() < jumlah) {
-            println("Gagal: stok tidak cukup")
+    fun isiTinta(jumlah: Int) {
+        if (jumlah > 0) {
+            tinta += jumlah
+            println("Tinta berhasil ditambah $jumlah. Total tinta: $tinta")
+        } else {
+            println("Isi tinta gagal. Jumlah harus lebih dari 0.")
+        }
+    }
+
+    fun isiKertas(jumlah: Int) {
+        if (jumlah > 0) {
+            kertas += jumlah
+            println("Kertas berhasil ditambah $jumlah. Total kertas: $kertas")
+        } else {
+            println("Isi kertas gagal. Jumlah harus lebih dari 0.")
+        }
+    }
+
+    fun prosesCetak(pelanggan: Pelanggan, dokumen: Dokumen) {
+        val halaman = dokumen.getJumlahHalaman()
+        val totalBiaya = halaman * hargaPerLembar
+
+        println("\n=== PROSES CETAK ===")
+        println("Mesin      : $namaMesin")
+        println("Pelanggan  : ${pelanggan.getNama()}")
+        println("Dokumen    : ${dokumen.getNamaDokumen()}")
+        println("Halaman    : $halaman")
+        println("Biaya      : Rp$totalBiaya")
+
+        if (halaman <= 0) {
+            println("Cetak gagal: jumlah halaman dokumen tidak valid.")
             return
         }
 
-        if (pembeli.lihatUang() < total) {
-            println("Gagal: uang tidak cukup")
+        if (tinta <= 0) {
+            println("Cetak gagal: tinta mesin habis.")
             return
         }
 
-        barang.kurangiStok(jumlah)
-        pembeli.kurangiUang(total)
-        pembeli.tambahPoin(10)
+        if (kertas <= 0) {
+            println("Cetak gagal: kertas mesin habis.")
+            return
+        }
 
-        println("Transaksi berhasil!")
+        if (kertas < halaman) {
+            println("Cetak gagal: kertas tidak mencukupi untuk mencetak $halaman halaman.")
+            return
+        }
+
+        if (tinta < halaman) {
+            println("Cetak gagal: tinta tidak mencukupi untuk mencetak $halaman halaman.")
+            return
+        }
+
+        if (!pelanggan.kurangiSaldo(totalBiaya)) {
+            println("Cetak gagal: saldo pelanggan tidak mencukupi.")
+            return
+        }
+
+        kertas -= halaman
+        tinta -= halaman
+
+        println("Cetak berhasil.")
+        println("Saldo pelanggan tersisa: Rp${pelanggan.getSaldo()}")
+        println("Sisa kertas mesin: $kertas")
+        println("Sisa tinta mesin : $tinta")
     }
 }
 
 fun main() {
-    val pembeli = Pembeli("Budi", 50000)
-    val barang = Barang("Minyak", 12000, 5)
-    val kasir = Kasir("Siti")
+    println("=== SISTEM ITK PRINT BERJALAN ===")
 
-    println("=== GAGAL ===")
-    kasir.prosesTransaksi(pembeli, barang, 10)
+    // Simulasi gagal: saldo tidak cukup
+    val pelangganGagal = Pelanggan("Fadilah", 1000)
+    val dokumenGagal = Dokumen("Laporan_Gagal.pdf", 10)
+    val mesinGagal = MesinPrint("Printer ITK-01", tintaAwal = 50, kertasAwal = 50, hargaPerLembar = 500)
 
-    println("=== SUKSES ===")
-    kasir.prosesTransaksi(pembeli, barang, 2)
+    println("\n=== SIMULASI GAGAL: SALDO TIDAK CUKUP ===")
+    mesinGagal.prosesCetak(pelangganGagal, dokumenGagal)
+
+    // Simulasi sukses
+    val pelangganSukses = Pelanggan("Fadilah", 10000)
+    val dokumenSukses = Dokumen("Laporan_Sukses.pdf", 10)
+    val mesinSukses = MesinPrint("Printer ITK-01", tintaAwal = 50, kertasAwal = 50, hargaPerLembar = 500)
+
+    println("\n=== SIMULASI SUKSES ===")
+    mesinSukses.prosesCetak(pelangganSukses, dokumenSukses)
+
+    println("\n=== INFO AKHIR MESIN ===")
+    println(mesinSukses.getInfoMesin())
 }
